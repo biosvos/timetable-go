@@ -1,8 +1,10 @@
 package rest
 
 import (
+	"encoding/json"
 	"github.com/pkg/errors"
 	"github.com/savsgio/atreugo/v11"
+	"net/http"
 	"timetable-go/usecase"
 )
 
@@ -23,12 +25,82 @@ func NewRest(uc usecase.Usecase) *Rest {
 }
 
 func (r *Rest) Run() error {
-	r.server.GET("/", r.CreateTimeRecord)
+	r.server.POST("/records", r.CreateTimeRecord)
+	r.server.DELETE("/records/{id}", r.DeleteTimeRecord)
+	r.server.PUT("/records", r.UpdateTimeRecord)
+	r.server.GET("/records", r.ListTimeRecords)
 
 	err := r.server.ListenAndServe()
 	return errors.Wrap(err, "failed to run")
 }
 
+type TimeRecord struct {
+	Id    string
+	Start string
+	End   *string
+	Memo  string
+}
+
 func (r *Rest) CreateTimeRecord(ctx *atreugo.RequestCtx) error {
-	return ctx.TextResponse("hello")
+	var record TimeRecord
+	const errMessage = "failed to create time record"
+	if err := json.Unmarshal(ctx.PostBody(), &record); err != nil {
+		return errors.Wrap(err, errMessage)
+	}
+
+	if err := r.usecase.CreateTimeRecord(usecase.TimeRecord{
+		Id:    record.Id,
+		Start: record.Start,
+		End:   record.End,
+		Memo:  record.Memo,
+	}); err != nil {
+		return errors.Wrap(err, errMessage)
+	}
+
+	return ctx.JSONResponse(nil, http.StatusNoContent)
+}
+
+func (r *Rest) DeleteTimeRecord(ctx *atreugo.RequestCtx) error {
+	id := ctx.UserValue("id").(string)
+	if err := r.usecase.DeleteTimeRecord(id); err != nil {
+		return errors.Wrap(err, "failed to delete time record")
+	}
+	return ctx.JSONResponse(nil, http.StatusOK)
+}
+
+func (r *Rest) UpdateTimeRecord(ctx *atreugo.RequestCtx) error {
+	var record TimeRecord
+	const errMessage = "failed to update time record"
+	if err := json.Unmarshal(ctx.PostBody(), &record); err != nil {
+		return errors.Wrap(err, errMessage)
+	}
+
+	if err := r.usecase.UpdateTimeRecord(usecase.TimeRecord{
+		Id:    record.Id,
+		Start: record.Start,
+		End:   record.End,
+		Memo:  record.Memo,
+	}); err != nil {
+		return errors.Wrap(err, errMessage)
+	}
+
+	return ctx.JSONResponse(nil, http.StatusNoContent)
+}
+
+func (r *Rest) ListTimeRecords(ctx *atreugo.RequestCtx) error {
+	records, err := r.usecase.ListTimeRecords()
+	if err != nil {
+		return errors.Wrap(err, "failed to list time records")
+	}
+
+	var ret []*TimeRecord
+	for _, record := range records {
+		ret = append(ret, &TimeRecord{
+			Id:    record.Id,
+			Start: record.Start,
+			End:   record.End,
+			Memo:  record.Memo,
+		})
+	}
+	return ctx.JSONResponse(ret, http.StatusOK)
 }
