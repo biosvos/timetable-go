@@ -15,17 +15,17 @@ type Repository interface {
 	Get(id string) (*domain.TimeRecord, error)
 }
 
-type SimpleUsecase struct {
+type simpleUsecase struct {
 	repository Repository
 }
 
 func NewSimpleUsecase(repository Repository) usecase.Usecase {
-	return &SimpleUsecase{
+	return &simpleUsecase{
 		repository: repository,
 	}
 }
 
-func (s *SimpleUsecase) CreateTimeRecord(record usecase.TimeRecord) error {
+func (s *simpleUsecase) CreateTimeRecord(record usecase.TimeRecord) error {
 	const errMessage = "failed to create time record"
 
 	domainRecord, err := toDomainTimeRecord(&record)
@@ -40,7 +40,7 @@ func (s *SimpleUsecase) CreateTimeRecord(record usecase.TimeRecord) error {
 	return nil
 }
 
-func (s *SimpleUsecase) UpdateTimeRecord(record usecase.TimeRecord) error {
+func (s *simpleUsecase) UpdateTimeRecord(record usecase.TimeRecord) error {
 	const errMessage = "failed to update time record"
 
 	domainRecord, err := toDomainTimeRecord(&record)
@@ -54,7 +54,7 @@ func (s *SimpleUsecase) UpdateTimeRecord(record usecase.TimeRecord) error {
 	return nil
 }
 
-func (s *SimpleUsecase) DeleteTimeRecord(id string) error {
+func (s *simpleUsecase) DeleteTimeRecord(id string) error {
 	const errMessage = "failed to delete time record"
 
 	err := s.repository.Delete(id)
@@ -64,7 +64,7 @@ func (s *SimpleUsecase) DeleteTimeRecord(id string) error {
 	return nil
 }
 
-func (s *SimpleUsecase) GetTimeRecord(id string) (*usecase.TimeRecord, error) {
+func (s *simpleUsecase) GetTimeRecord(id string) (*usecase.TimeRecord, error) {
 	const errMessage = "failed to get time record"
 
 	domainRecord, err := s.repository.Get(id)
@@ -80,7 +80,7 @@ func (s *SimpleUsecase) GetTimeRecord(id string) (*usecase.TimeRecord, error) {
 	return record, nil
 }
 
-func (s *SimpleUsecase) ListTimeRecords() ([]*usecase.TimeRecord, error) {
+func (s *simpleUsecase) ListTimeRecords() ([]*usecase.TimeRecord, error) {
 	const errMessage = "failed to list time records"
 
 	domainRecords, err := s.repository.List()
