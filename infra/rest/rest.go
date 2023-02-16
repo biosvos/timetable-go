@@ -87,20 +87,24 @@ func (r *Rest) UpdateTimeRecord(ctx *atreugo.RequestCtx) error {
 	return ctx.JSONResponse(nil, http.StatusNoContent)
 }
 
+type TimeRecordList struct {
+	Items []*TimeRecord `json:"items,omitempty"`
+}
+
 func (r *Rest) ListTimeRecords(ctx *atreugo.RequestCtx) error {
 	records, err := r.usecase.ListTimeRecords()
 	if err != nil {
 		return errors.Wrap(err, "failed to list time records")
 	}
 
-	var ret []*TimeRecord
+	var items []*TimeRecord
 	for _, record := range records {
-		ret = append(ret, &TimeRecord{
+		items = append(items, &TimeRecord{
 			Id:    record.Id,
 			Start: record.Start,
 			End:   record.End,
 			Memo:  record.Memo,
 		})
 	}
-	return ctx.JSONResponse(ret, http.StatusOK)
+	return ctx.JSONResponse(&TimeRecordList{Items: items}, http.StatusOK)
 }
