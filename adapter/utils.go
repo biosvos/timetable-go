@@ -31,6 +31,6 @@ func toUsecaseRecord(record *domain.TimeRecord) (*usecase.TimeRecord, error) {
 		Id:    record.Id(),
 		Start: record.StartString(),
 		End:   record.EndString(),
-		Memo:  record.Id(),
+		Memo:  record.Memo(),
 	}, nil
 }
