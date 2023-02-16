@@ -6,39 +6,48 @@ import (
 	"timetable-go/usecase"
 )
 
-type SimpleUsecase struct {
-	store map[string]*domain.TimeRecord
+type Repository interface {
+	Create(record *domain.TimeRecord) error
+	Delete(id string) error
+	Update(record *domain.TimeRecord) error
+
+	List() ([]*domain.TimeRecord, error)
+	Get(id string) (*domain.TimeRecord, error)
 }
 
-func NewSimpleUsecase() usecase.Usecase {
+type SimpleUsecase struct {
+	repository Repository
+}
+
+func NewSimpleUsecase(repository Repository) usecase.Usecase {
 	return &SimpleUsecase{
-		store: make(map[string]*domain.TimeRecord),
+		repository: repository,
 	}
 }
 
 func (s *SimpleUsecase) CreateTimeRecord(record usecase.TimeRecord) error {
-	_, ok := s.store[record.Id]
 	const errMessage = "failed to create time record"
-	if ok {
-		return errors.New(errMessage)
-	}
 
 	domainRecord, err := toDomainTimeRecord(&record)
 	if err != nil {
 		return errors.Wrap(err, errMessage)
 	}
+	err = s.repository.Create(domainRecord)
+	if err != nil {
+		return errors.Wrap(err, errMessage)
+	}
 
-	s.store[record.Id] = domainRecord
 	return nil
 }
 
 func (s *SimpleUsecase) UpdateTimeRecord(record usecase.TimeRecord) error {
-	err := s.DeleteTimeRecord(record.Id)
 	const errMessage = "failed to update time record"
+
+	domainRecord, err := toDomainTimeRecord(&record)
 	if err != nil {
 		return errors.Wrap(err, errMessage)
 	}
-	err = s.CreateTimeRecord(record)
+	err = s.repository.Update(domainRecord)
 	if err != nil {
 		return errors.Wrap(err, errMessage)
 	}
@@ -46,20 +55,23 @@ func (s *SimpleUsecase) UpdateTimeRecord(record usecase.TimeRecord) error {
 }
 
 func (s *SimpleUsecase) DeleteTimeRecord(id string) error {
-	_, ok := s.store[id]
-	if !ok {
-		return errors.New("failed to delete time record")
+	const errMessage = "failed to delete time record"
+
+	err := s.repository.Delete(id)
+	if err != nil {
+		return errors.Wrap(err, errMessage)
 	}
-	delete(s.store, id)
 	return nil
 }
 
 func (s *SimpleUsecase) GetTimeRecord(id string) (*usecase.TimeRecord, error) {
-	domainRecord, ok := s.store[id]
 	const errMessage = "failed to get time record"
-	if !ok {
-		return nil, errors.New(errMessage)
+
+	domainRecord, err := s.repository.Get(id)
+	if err != nil {
+		return nil, errors.Wrap(err, errMessage)
 	}
+
 	record, err := toUsecaseRecord(domainRecord)
 	if err != nil {
 		return nil, errors.Wrap(err, errMessage)
@@ -69,11 +81,18 @@ func (s *SimpleUsecase) GetTimeRecord(id string) (*usecase.TimeRecord, error) {
 }
 
 func (s *SimpleUsecase) ListTimeRecords() ([]*usecase.TimeRecord, error) {
+	const errMessage = "failed to list time records"
+
+	domainRecords, err := s.repository.List()
+	if err != nil {
+		return nil, errors.Wrap(err, errMessage)
+	}
+
 	var ret []*usecase.TimeRecord
-	for _, domainRecord := range s.store {
+	for _, domainRecord := range domainRecords {
 		record, err := toUsecaseRecord(domainRecord)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to list time records")
+			return nil, errors.Wrap(err, errMessage)
 		}
 		ret = append(ret, record)
 	}
