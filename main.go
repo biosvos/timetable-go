@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"timetable-go/adapter"
+	"timetable-go/infra/broker"
 	"timetable-go/infra/repository"
 	"timetable-go/infra/rest"
 )
@@ -12,7 +13,14 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	uc := adapter.NewSimpleUsecase(fileRepository)
+
+	zeromqBroker, closeFn, err := broker.NewZeroMessageQueueBroker(5555)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer closeFn()
+
+	uc := adapter.NewSimpleUsecase(fileRepository, zeromqBroker)
 	err = rest.NewRest(uc).Run()
 	if err != nil {
 		log.Fatal(err)

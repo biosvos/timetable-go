@@ -3,6 +3,7 @@ module timetable-go
 go 1.20
 
 require (
+	github.com/pebbe/zmq4 v1.2.9
 	github.com/pkg/errors v0.9.1
 	github.com/savsgio/atreugo/v11 v11.9.9
 	github.com/stretchr/testify v1.8.1

@@ -15,13 +15,27 @@ type Repository interface {
 	Get(id string) (*domain.TimeRecord, error)
 }
 
-type simpleUsecase struct {
-	repository Repository
+type Topic string
+
+const (
+	TopicCreated = Topic("created")
+	TopicDeleted = Topic("deleted")
+	TopicUpdated = Topic("updated")
+)
+
+type Broker interface {
+	Publish(topic Topic, record *domain.TimeRecord) error
 }
 
-func NewSimpleUsecase(repository Repository) usecase.Usecase {
+type simpleUsecase struct {
+	repository Repository
+	broker     Broker
+}
+
+func NewSimpleUsecase(repository Repository, broker Broker) usecase.Usecase {
 	return &simpleUsecase{
 		repository: repository,
+		broker:     broker,
 	}
 }
 
@@ -37,6 +51,10 @@ func (s *simpleUsecase) CreateTimeRecord(record usecase.TimeRecord) error {
 		return errors.Wrap(err, errMessage)
 	}
 
+	err = s.broker.Publish(TopicCreated, domainRecord)
+	if err != nil {
+		return errors.Wrap(err, errMessage)
+	}
 	return nil
 }
 
@@ -51,13 +69,27 @@ func (s *simpleUsecase) UpdateTimeRecord(record usecase.TimeRecord) error {
 	if err != nil {
 		return errors.Wrap(err, errMessage)
 	}
+
+	err = s.broker.Publish(TopicUpdated, domainRecord)
+	if err != nil {
+		return errors.Wrap(err, errMessage)
+	}
 	return nil
 }
 
 func (s *simpleUsecase) DeleteTimeRecord(id string) error {
 	const errMessage = "failed to delete time record"
+	domainRecord, err := s.repository.Get(id)
+	if err != nil {
+		return errors.Wrap(err, errMessage)
+	}
 
-	err := s.repository.Delete(id)
+	err = s.repository.Delete(id)
+	if err != nil {
+		return errors.Wrap(err, errMessage)
+	}
+
+	err = s.broker.Publish(TopicDeleted, domainRecord)
 	if err != nil {
 		return errors.Wrap(err, errMessage)
 	}
