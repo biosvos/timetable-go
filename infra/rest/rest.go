@@ -45,7 +45,7 @@ func (r *Rest) CreateTimeRecord(ctx *atreugo.RequestCtx) error {
 	var record TimeRecord
 	const errMessage = "failed to create time record"
 	if err := json.Unmarshal(ctx.PostBody(), &record); err != nil {
-		return errors.Wrap(err, errMessage)
+		return ctx.ErrorResponse(errors.Wrap(err, errMessage))
 	}
 
 	if err := r.usecase.CreateTimeRecord(usecase.TimeRecord{
@@ -54,7 +54,7 @@ func (r *Rest) CreateTimeRecord(ctx *atreugo.RequestCtx) error {
 		End:   record.End,
 		Memo:  record.Memo,
 	}); err != nil {
-		return errors.Wrap(err, errMessage)
+		return ctx.ErrorResponse(errors.Wrap(err, errMessage))
 	}
 
 	return ctx.JSONResponse(nil, http.StatusNoContent)
@@ -63,7 +63,7 @@ func (r *Rest) CreateTimeRecord(ctx *atreugo.RequestCtx) error {
 func (r *Rest) DeleteTimeRecord(ctx *atreugo.RequestCtx) error {
 	id := ctx.UserValue("id").(string)
 	if err := r.usecase.DeleteTimeRecord(id); err != nil {
-		return errors.Wrap(err, "failed to delete time record")
+		return ctx.ErrorResponse(errors.Wrap(err, "failed to delete time record"))
 	}
 	return ctx.JSONResponse(nil, http.StatusOK)
 }
@@ -72,7 +72,7 @@ func (r *Rest) UpdateTimeRecord(ctx *atreugo.RequestCtx) error {
 	var record TimeRecord
 	const errMessage = "failed to update time record"
 	if err := json.Unmarshal(ctx.PostBody(), &record); err != nil {
-		return errors.Wrap(err, errMessage)
+		return ctx.ErrorResponse(errors.Wrap(err, errMessage))
 	}
 
 	if err := r.usecase.UpdateTimeRecord(usecase.TimeRecord{
@@ -81,7 +81,7 @@ func (r *Rest) UpdateTimeRecord(ctx *atreugo.RequestCtx) error {
 		End:   record.End,
 		Memo:  record.Memo,
 	}); err != nil {
-		return errors.Wrap(err, errMessage)
+		return ctx.ErrorResponse(errors.Wrap(err, errMessage))
 	}
 
 	return ctx.JSONResponse(nil, http.StatusNoContent)
@@ -94,7 +94,7 @@ type TimeRecordList struct {
 func (r *Rest) ListTimeRecords(ctx *atreugo.RequestCtx) error {
 	records, err := r.usecase.ListTimeRecords()
 	if err != nil {
-		return errors.Wrap(err, "failed to list time records")
+		return ctx.ErrorResponse(errors.Wrap(err, "failed to list time records"))
 	}
 
 	var items []*TimeRecord
