@@ -8,7 +8,13 @@ import (
 )
 
 func main() {
-	uc := adapter.NewSimpleUsecase(repository.NewMemoryRepository())
-	err := rest.NewRest(uc).Run()
-	log.Println(err)
+	fileRepository, err := repository.NewFileRepository(repository.NewMemoryRepository(), "testfile")
+	if err != nil {
+		log.Fatal(err)
+	}
+	uc := adapter.NewSimpleUsecase(fileRepository)
+	err = rest.NewRest(uc).Run()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
