@@ -60,7 +60,7 @@ func (f *fileRepository) save() error {
 		return errors.Wrap(err, errMessage)
 	}
 
-	err = os.WriteFile(f.filename, marshal, 0)
+	err = os.WriteFile(f.filename, marshal, 0600)
 	return errors.Wrap(err, errMessage)
 }
 
